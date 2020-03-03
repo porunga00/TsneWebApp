@@ -23,8 +23,6 @@ train = pd.DataFrame(datasets.load_wine()["data"])
 col_options = [dict(label=x, value=x) for x in train.columns]
 
 test = None
-perplexity = 30
-learning_rate = 10
 n_iter = 1000
 n_components = 3
 
@@ -94,7 +92,7 @@ app.layout = html.Div(
                     [
                         html.H2("perplexity"),
                         dcc.Input(
-                            id="input_perplexity",
+                            id="perplexity",
                             type="number",
                             min=10,
                             max=200,
@@ -106,7 +104,7 @@ app.layout = html.Div(
                     [
                         html.H2("learning rate"),
                         dcc.Input(
-                            id="input_learning_rate",
+                            id="learning_rate",
                             type="number",
                             min=1,
                             max=40
@@ -140,20 +138,27 @@ app.layout = html.Div(
 @app.callback(
     Output("graph", "figure"),
     [
+        Input("column", "value"),
         Input("run_button", "n_clicks"),
+        Input("perplexity", "value"),
+        Input("learning_rate", "value"),
         Input("color", "value")
     ]
 )
-def calc_tsne(n_clicks, color):
+def calc_tsne(column, n_clicks, perplexity, learning_rate, color):
+    if perplexity is None:
+        perplexity = 30
+    if learning_rate is None:
+        learning_rate = 10
     if n_clicks > 0:
         train_reduced = TSNE(
             n_components=n_components,
             perplexity=perplexity,
             learning_rate=learning_rate,
             n_iter=n_iter
-        ).fit_transform(train)
+        ).fit_transform(train.loc[:, column:])
         train_reduced = pd.DataFrame(train_reduced, columns=[f"components {i+1}" for i in range(n_components)])
-        train_reduced = pd.concat([train, train_reduced], axis=1)
+        train_reduced = pd.concat([train.loc[:, column:], train_reduced], axis=1)
         x, y, z = "components 1", "components 2", "components 3"
 
     else:
