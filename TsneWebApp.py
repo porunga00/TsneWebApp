@@ -5,6 +5,8 @@ import os
 
 import numpy as np
 import pandas as pd
+import base64
+import io
 
 from sklearn.manifold import TSNE
 
@@ -138,6 +140,7 @@ app.layout = html.Div(
 @app.callback(
     Output("graph", "figure"),
     [
+        Input("train data", "contents"),
         Input("column", "value"),
         Input("run_button", "n_clicks"),
         Input("perplexity", "value"),
@@ -145,7 +148,10 @@ app.layout = html.Div(
         Input("color", "value")
     ]
 )
-def calc_tsne(column, n_clicks, perplexity, learning_rate, color):
+def calc_tsne(train_contents, column, n_clicks, perplexity, learning_rate, color):
+    global train
+    if train_contents is not None:
+        train = contents2dataframe(train_contents)
     if perplexity is None:
         perplexity = 30
     if learning_rate is None:
@@ -173,6 +179,14 @@ def calc_tsne(column, n_clicks, perplexity, learning_rate, color):
         z=z,
         color=color
     )
+
+
+def contents2dataframe(contents):
+    content_type, content_string = contents.split(",")
+
+    decoded = base64.b64decode(content_string)
+    df = pd.read_csv(io.StringIO(decoded.decode("utf-8")))
+    return df
 
 
 app.run_server(port=8045, debug=True)
